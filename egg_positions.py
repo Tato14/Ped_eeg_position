@@ -79,7 +79,7 @@ def get_midline_fractions(age, sex):
         # along the nasion-inion axis. The front_shift is negative, pushing points forward.
         fractions[label] = cz_fraction + scaled_offset + front_shift
 
-    return fractions
+    return fractions, spacing_factor, front_shift
 
 def compute_electrodes(age, sex, nasion_inion_distance, preauricular_distance):
     """
@@ -102,7 +102,7 @@ def compute_electrodes(age, sex, nasion_inion_distance, preauricular_distance):
     right_preauricular = (preauricular_distance/2.0, -mid_vertical)
 
     # Compute midline electrode positions
-    midline_fracs = get_midline_fractions(age, sex)
+    midline_fracs, spacing_factor, front_shift = get_midline_fractions(age, sex)
     electrodes = {}
     for label, frac in midline_fracs.items():
         electrodes[label] = interpolate_point(nasion, inion, frac)
@@ -161,16 +161,24 @@ def compute_electrodes(age, sex, nasion_inion_distance, preauricular_distance):
 # ---- Streamlit App ----
 
 st.title("EEG Electrode Placement (2D)")
+st.write("This app calculates and visualizes electrode positions based on age, sex, and head dimensions.")
 
 # Sidebar inputs for parameters
 st.sidebar.header("Parameters")
-age = st.sidebar.number_input("Age (years)", min_value=0.0, value=5.0, step=1.0)
+age = st.sidebar.number_input("Age (years)", min_value=0.0, value=5.0, step=0.1)
 sex = st.sidebar.selectbox("Sex", options=["male", "female"])
 nasion_inion_distance = st.sidebar.number_input("Nasion-Inion distance (cm)", min_value=1.0, value=35.0)
 preauricular_distance = st.sidebar.number_input("Preauricular distance (cm)", min_value=1.0, value=30.0)
 
+#Compute the midline fractions with a frontal shift.
+midline_fracs, spacing_factor, front_shift = get_midline_fractions(age, sex)
+
 # Compute electrode positions with given parameters
 electrodes, nasion, inion, lpa, rpa, ni_dist, pa_dist = compute_electrodes(age, sex, nasion_inion_distance, preauricular_distance)
+
+st.subheader("Calculated Values")
+st.write(f"**Final Spacing Factor:** {spacing_factor}")
+st.write(f"**Frontal Shift:** {front_shift}")
 
 st.subheader("Electrode Coordinates")
 for name, coord in electrodes.items():
