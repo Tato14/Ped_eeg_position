@@ -10,7 +10,7 @@ def interpolate_point(p1, p2, fraction):
     return (p1[0] + fraction * (p2[0] - p1[0]),
             p1[1] + fraction * (p2[1] - p1[1]))
 
-def get_scale_factor_for_midline(age, sex):
+def get_scale_factor_for_midline(age_months, sex):
     """
     Returns a scaling factor and a precomputed front shift fraction based on age in months and sex.
     
@@ -43,7 +43,7 @@ def get_scale_factor_for_midline(age, sex):
 
     return final_spacing_factor, front_shift_fraction
 
-def get_midline_fractions(age, sex):
+def get_midline_fractions(age_months, sex):
     """
     Compute the midline fractions with the new logic:
     - At age 10: standard offsets (no shift)
@@ -59,7 +59,7 @@ def get_midline_fractions(age, sex):
         'Oz':   0.40
     }
 
-    spacing_factor, front_shift_fraction = get_scale_factor_for_midline(age, sex)
+    spacing_factor, front_shift_fraction = get_scale_factor_for_midline(age_months, sex)
     
     fractions = {'Cz': cz_fraction}
     for label, offset in offsets.items():
@@ -72,7 +72,7 @@ def get_midline_fractions(age, sex):
 
     return fractions, spacing_factor, front_shift_fraction
 
-def compute_electrodes(age, sex, nasion_inion_distance, preauricular_distance):
+def compute_electrodes(age_months, sex, nasion_inion_distance, preauricular_distance):
     """
     Given age, sex, and head measurements (nasion-inion and preauricular distances),
     compute the electrode positions on the scalp.
@@ -93,7 +93,7 @@ def compute_electrodes(age, sex, nasion_inion_distance, preauricular_distance):
     right_preauricular = (preauricular_distance/2.0, -mid_vertical)
 
     # Compute midline electrode positions
-    midline_fracs, spacing_factor, front_shift_fraction = get_midline_fractions(age, sex)
+    midline_fracs, spacing_factor, front_shift_fraction = get_midline_fractions(age_months, sex)
     electrodes = {}
     for label, frac in midline_fracs.items():
         electrodes[label] = interpolate_point(nasion, inion, frac)
@@ -156,16 +156,16 @@ st.write("This app calculates and visualizes electrode positions based on age, s
 
 # Sidebar inputs for parameters
 st.sidebar.header("Parameters")
-age = st.sidebar.number_input("Age (years)", min_value=0.0, value=5.0, step=0.1)
+age_months = st.sidebar.number_input("Age (months)", min_value=0.0, value=120.0, step=0.1)
 sex = st.sidebar.selectbox("Sex", options=["male", "female"])
 nasion_inion_distance = st.sidebar.number_input("Nasion-Inion distance (cm)", min_value=1.0, value=35.0)
 preauricular_distance = st.sidebar.number_input("Preauricular distance (cm)", min_value=1.0, value=30.0)
 
 #Compute the midline fractions with a frontal shift.
-midline_fracs, spacing_factor, front_shift_fraction = get_midline_fractions(age, sex)
+midline_fracs, spacing_factor, front_shift_fraction = get_midline_fractions(age_months, sex)
 
 # Compute electrode positions with given parameters
-electrodes, nasion, inion, lpa, rpa, ni_dist, pa_dist = compute_electrodes(age, sex, nasion_inion_distance, preauricular_distance)
+electrodes, nasion, inion, lpa, rpa, ni_dist, pa_dist = compute_electrodes(age_months, sex, nasion_inion_distance, preauricular_distance)
 
 st.subheader("Calculated Values")
 st.write(f"**Final Spacing Factor:** {spacing_factor}")
@@ -202,7 +202,7 @@ ax.text(inion[0], inion[1], 'Inion', fontsize=9, color='b', ha='center', va='top
 ax.text(lpa[0], lpa[1], 'LPA', fontsize=9, color='b', ha='right', va='center')
 ax.text(rpa[0], rpa[1], 'RPA', fontsize=9, color='b', ha='left', va='center')
 
-ax.set_title(f"2D Head Representation ({age}-yr-old {sex})")
+ax.set_title(f"2D Head Representation ({age_months}-months-old {sex})")
 ax.set_xlabel("X-position (cm)")
 ax.set_ylabel("Y-position (cm)")
 ax.set_aspect('equal', adjustable='box')
