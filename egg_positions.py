@@ -12,43 +12,55 @@ def interpolate_point(p1, p2, fraction):
 
 def get_scale_factor_for_midline(age, sex):
     """
-    Returns a scaling factor to adjust midline electrode positions based on age and sex.
-    - Younger ages compress distances toward Cz (less spread).
-    - Female sex slightly reduces the spread by an additional factor.
+    Returns a scaling factor and a frontal shift based on age and sex.
+    - At age 10: Full standard spacing (no scaling, no shift).
+    - Under age 10: The electrodes shift more towards the front rather than reduce spacing.
+    - Above age 10: Same as at 10 (full spacing), no shift.
     
-    This is a hypothetical model:
-    - At age 1, factor ~0.7 (70% of adult spacing)
-    - By age 20, factor ~1.0 (full adult spacing)
-    - For female, multiply by 0.95 to slightly reduce distances.
+    Sex factor can still be used to slightly adjust spacing if desired,
+    or you can keep it at 1.0 if you don't want sex differences.
     """
-    # Age-based scaling
-    if age < 1:
-        age_factor = 0.7
-    elif age > 20:
-        age_factor = 1.0
-    else:
-        # Linear interpolation between age 1 and 20
-        # age=1 -> 0.7, age=20 -> 1.0
-        age_factor = 0.7 + (1.0 - 0.7)*((age - 1)/19)
+    # Base spacing factor: at age 10, factor=1.0
+    # We no longer reduce spacing below age 10, so factor is always 1.0.
+    spacing_factor = 1.0
     
-    # Sex-based scaling
+    # Frontal shift: at age < 10, introduce a negative shift (towards nasion).
+    # For example, at age=1, strong shift; at age=10, no shift.
+    # Let's say at age=1: shift = -0.15 (more frontal)
+    # At age=10: shift = 0.0
+    # We'll do a linear interpolation between age=1 and age=10:
+    # age=1 -> shift=-0.15
+    # age=10 -> shift=0.0
+    # If age < 1, just cap it at -0.15
+    # If age > 10, no shift.
+    if age < 1:
+        front_shift = -0.15
+    elif age > 10:
+        front_shift = 0.0
+    else:
+        # Linear interpolation between age=1 and age=10
+        # (age-1)/9 moves from 0 at age=1 to 1 at age=10
+        front_shift = -0.15 * (1 - (age - 1)/9.0)
+        # at age=1: (age-1)/9=0 -> front_shift = -0.15
+        # at age=10: (age-1)/9=1 -> front_shift = -0.15*(1-1)=0
+    
+    # Sex factor: if you still want a slight reduction for females, apply it here
     sex_factor = 0.95 if sex.lower() == 'female' else 1.0
 
-    return age_factor * sex_factor
+    # The final factor applied to spacing remains 1.0 but we have sex_factor if needed
+    final_spacing_factor = spacing_factor * sex_factor
+
+    return final_spacing_factor, front_shift
 
 def get_midline_fractions(age, sex):
     """
-    Compute the relative positions of midline electrodes as fractions along the nasion-inion line.
-    Cz is fixed at 0.50 (the midpoint).
-    Fpz, Fz, Pz, Oz are defined as offsets from Cz, then scaled by the factor from get_scale_factor_for_midline.
-    
-    Offsets:
-    - Fpz: Cz - 0.40
-    - Fz:  Cz - 0.30
-    - Pz:  Cz + 0.20
-    - Oz:  Cz + 0.40
+    Compute the midline fractions with the new logic:
+    - At age 10: standard offsets (no shift)
+    - Under age 10: same offsets, but apply a frontal shift
+    - Above age 10: standard offsets
     """
     cz_fraction = 0.50
+    # Standard offsets at full spacing (age 10)
     offsets = {
         'Fpz': -0.40,
         'Fz':  -0.30,
@@ -56,12 +68,16 @@ def get_midline_fractions(age, sex):
         'Oz':   0.40
     }
 
-    scale = get_scale_factor_for_midline(age, sex)
-
-    # Apply scaling to each offset
+    spacing_factor, front_shift = get_scale_factor_for_midline(age, sex)
+    
     fractions = {'Cz': cz_fraction}
     for label, offset in offsets.items():
-        fractions[label] = cz_fraction + offset * scale
+        # Apply spacing factor (if needed) to the offset
+        scaled_offset = offset * spacing_factor
+        # Apply the front shift (which moves all electrodes forward for <10 years)
+        # Moving forward (towards the nasion) means decreasing the fraction value 
+        # along the nasion-inion axis. The front_shift is negative, pushing points forward.
+        fractions[label] = cz_fraction + scaled_offset + front_shift
 
     return fractions
 
