@@ -12,10 +12,7 @@ def interpolate_point(p1, p2, fraction):
 
 def get_scale_factor_for_midline(age, sex):
     """
-    Returns a scaling factor and a frontal shift based on age and sex.
-    - At age 10: Full standard spacing (no scaling, no shift).
-    - Under age 10: The electrodes shift more towards the front rather than reduce spacing.
-    - Above age 10: Same as at 10 (full spacing), no shift.
+    Returns a scaling factor and a precomputed front shift fraction based on age in months and sex.
     
     Sex factor can still be used to slightly adjust spacing if desired,
     or you can keep it at 1.0 if you don't want sex differences.
@@ -24,25 +21,19 @@ def get_scale_factor_for_midline(age, sex):
     # We no longer reduce spacing below age 10, so factor is always 1.0.
     spacing_factor = 1.0
     
-    # Frontal shift: at age < 10, introduce a negative shift (towards nasion).
-    # For example, at age=1, strong shift; at age=10, no shift.
-    # Let's say at age=1: shift = -0.15 (more frontal)
-    # At age=10: shift = 0.0
-    # We'll do a linear interpolation between age=1 and age=10:
-    # age=1 -> shift=-0.15
-    # age=10 -> shift=0.0
-    # If age < 1, just cap it at -0.15
-    # If age > 10, no shift.
-    if age < 1:
-        front_shift = -0.15
-    elif age > 10:
-        front_shift = 0.0
+    # Precomputed fractions for front shift
+    if age_months <= 12:
+        # Linear interpolation: 8.57% to 5.71%
+        front_shift_fraction = 0.0857 - (age_months / 12) * (0.0857 - 0.0571)
+    elif age_months <= 48:
+        # Linear interpolation: 5.71% to 2.86%
+        front_shift_fraction = 0.0571 - ((age_months - 12) / 36) * (0.0571 - 0.0286)
+    elif age_months <= 120:
+        # Linear interpolation: 2.86% to 0%
+        front_shift_fraction = 0.0286 - ((age_months - 48) / 72) * 0.0286
     else:
-        # Linear interpolation between age=1 and age=10
-        # (age-1)/9 moves from 0 at age=1 to 1 at age=10
-        front_shift = -0.15 * (1 - (age - 1)/9.0)
-        # at age=1: (age-1)/9=0 -> front_shift = -0.15
-        # at age=10: (age-1)/9=1 -> front_shift = -0.15*(1-1)=0
+        # No shift for ages above 120 months
+        front_shift_fraction = 0.0
     
     # Sex factor: if you still want a slight reduction for females, apply it here
     sex_factor = 0.95 if sex.lower() == 'female' else 1.0
@@ -50,7 +41,7 @@ def get_scale_factor_for_midline(age, sex):
     # The final factor applied to spacing remains 1.0 but we have sex_factor if needed
     final_spacing_factor = spacing_factor * sex_factor
 
-    return final_spacing_factor, front_shift
+    return final_spacing_factor, front_shift_fraction
 
 def get_midline_fractions(age, sex):
     """
@@ -68,7 +59,7 @@ def get_midline_fractions(age, sex):
         'Oz':   0.40
     }
 
-    spacing_factor, front_shift = get_scale_factor_for_midline(age, sex)
+    spacing_factor, front_shift_fraction = get_scale_factor_for_midline(age, sex)
     
     fractions = {'Cz': cz_fraction}
     for label, offset in offsets.items():
@@ -76,10 +67,10 @@ def get_midline_fractions(age, sex):
         scaled_offset = offset * spacing_factor
         # Apply the front shift (which moves all electrodes forward for <10 years)
         # Moving forward (towards the nasion) means decreasing the fraction value 
-        # along the nasion-inion axis. The front_shift is negative, pushing points forward.
-        fractions[label] = cz_fraction + scaled_offset + front_shift
+        # along the nasion-inion axis. The front_shift_fraction is negative, pushing points forward.
+        fractions[label] = cz_fraction + scaled_offset + front_shift_fraction
 
-    return fractions, spacing_factor, front_shift
+    return fractions, spacing_factor, front_shift_fraction
 
 def compute_electrodes(age, sex, nasion_inion_distance, preauricular_distance):
     """
@@ -102,7 +93,7 @@ def compute_electrodes(age, sex, nasion_inion_distance, preauricular_distance):
     right_preauricular = (preauricular_distance/2.0, -mid_vertical)
 
     # Compute midline electrode positions
-    midline_fracs, spacing_factor, front_shift = get_midline_fractions(age, sex)
+    midline_fracs, spacing_factor, front_shift_fraction = get_midline_fractions(age, sex)
     electrodes = {}
     for label, frac in midline_fracs.items():
         electrodes[label] = interpolate_point(nasion, inion, frac)
@@ -171,14 +162,14 @@ nasion_inion_distance = st.sidebar.number_input("Nasion-Inion distance (cm)", mi
 preauricular_distance = st.sidebar.number_input("Preauricular distance (cm)", min_value=1.0, value=30.0)
 
 #Compute the midline fractions with a frontal shift.
-midline_fracs, spacing_factor, front_shift = get_midline_fractions(age, sex)
+midline_fracs, spacing_factor, front_shift_fraction = get_midline_fractions(age, sex)
 
 # Compute electrode positions with given parameters
 electrodes, nasion, inion, lpa, rpa, ni_dist, pa_dist = compute_electrodes(age, sex, nasion_inion_distance, preauricular_distance)
 
 st.subheader("Calculated Values")
 st.write(f"**Final Spacing Factor:** {spacing_factor}")
-st.write(f"**Frontal Shift:** {front_shift}")
+st.write(f"**Frontal Shift:** {front_shift_fraction}")
 
 st.subheader("Electrode Coordinates")
 for name, coord in electrodes.items():
