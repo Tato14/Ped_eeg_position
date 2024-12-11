@@ -30,8 +30,11 @@ def get_scale_factor_for_midline(age_months, sex, nasion_inion_dist):
 def get_midline_fractions(age_months, sex, nasion_inion_dist):
     """
     Compute the midline fractions with a frontal shift.
+    Ensures Cz is at the true center of the nasion-inion distance.
     """
-    cz_fraction = 0.00
+    cz_fraction = 0.50  # Cz is at the middle of the nasion-inion axis
+
+    # Electrode offsets relative to Cz
     offsets = {
         'Fpz': -0.40,
         'Fz':  -0.30,
@@ -39,12 +42,21 @@ def get_midline_fractions(age_months, sex, nasion_inion_dist):
         'Oz':   0.40
     }
 
+    # Calculate spacing and frontal shift
     spacing_factor, front_shift_cm = get_scale_factor_for_midline(age_months, sex, nasion_inion_dist)
-    front_shift_fraction = front_shift_cm / nasion_inion_dist  # Convert cm to fraction for positioning
+
+    # Convert frontal shift to a fraction of nasion-inion distance
+    front_shift_fraction = front_shift_cm / nasion_inion_dist
+
+    # Apply frontal shift only for positions above Cz
     fractions = {'Cz': cz_fraction}
     for label, offset in offsets.items():
         scaled_offset = offset * spacing_factor
-        fractions[label] = cz_fraction + scaled_offset + front_shift_fraction
+        # Apply shift only to electrodes in the front
+        if offset < 0:
+            fractions[label] = cz_fraction + scaled_offset + front_shift_fraction
+        else:
+            fractions[label] = cz_fraction + scaled_offset
 
     return fractions, spacing_factor, front_shift_cm
 
@@ -62,7 +74,7 @@ def plot_electrode_positions(fractions, nasion_inion_dist, preauricular_dist):
     # Plot electrodes
     for label, fraction in fractions.items():
         x = 0
-        y = fraction * nasion_inion_dist / 2  # Scaled by nasion-inion distance
+        y = (fraction - 0.5) * nasion_inion_dist  # Center Cz at 0.5
         ax.plot(x, y, 'ro')
         ax.text(x, y + 0.02, label, fontsize=10, ha='center')
 
@@ -76,6 +88,7 @@ def plot_electrode_positions(fractions, nasion_inion_dist, preauricular_dist):
     ax.grid(True)
 
     st.pyplot(fig)
+
 
 # Streamlit UI
 st.title("Electrode Positioning on Scalp")
@@ -93,6 +106,7 @@ fractions, spacing_factor, front_shift_cm = get_midline_fractions(age_months, se
 # Display Results
 st.write("### Calculated Values")
 st.write(f"**Final Spacing Factor:** {spacing_factor}")
+st.write(f"**Cz Fraction (Center):** {fractions['Cz']}")
 st.write(f"**Frontal Shift (cm):** {front_shift_cm:.2f} cm")
 
 # Plot
