@@ -31,7 +31,7 @@ def get_midline_fractions(age_months, sex, nasion_inion_dist):
     """
     Compute the midline fractions with a frontal shift.
     """
-    cz_fraction = 0.50
+    cz_fraction = 0.00
     offsets = {
         'Fpz': -0.40,
         'Fz':  -0.30,
