@@ -53,10 +53,10 @@ def get_midline_fractions(age_months, sex, nasion_inion_dist):
     for label, offset in offsets.items():
         scaled_offset = offset * spacing_factor
         # Apply shift only to electrodes in the front
-        if offset < 0:
-            fractions[label] = cz_fraction + scaled_offset + front_shift_fraction
-        else:
-            fractions[label] = cz_fraction + scaled_offset
+        #if offset < 0:
+        fractions[label] = cz_fraction + scaled_offset + front_shift_fraction
+        #else:
+        #    fractions[label] = cz_fraction + scaled_offset
 
     return fractions, spacing_factor, front_shift_cm
 
