@@ -86,12 +86,12 @@ def plot_electrode_positions(fractions, nasion_inion_dist, preauricular_dist):
     tick_step = 0.5
 
     # Generate ticks
-    ticks = [tick * tick_step for tick in range(-2 * int(max_distance), 2 * int(max_distance) + 1)]
-    ticks = [tick for tick in ticks if -max_distance <= tick <= max_distance]
+    #ticks = [tick * tick_step for tick in range(-2 * int(max_distance), 2 * int(max_distance) + 1)]
+    #ticks = [tick for tick in ticks if -max_distance <= tick <= max_distance]
 
     # Set ticks and axis limits
-    ax.set_xticks(ticks)
-    ax.set_yticks(ticks)
+    #ax.set_xticks(ticks)
+    #ax.set_yticks(ticks)
     ax.set_xlim(-radius_x, radius_x)
     ax.set_ylim(-radius_y, radius_y)
     
