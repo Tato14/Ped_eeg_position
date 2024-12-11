@@ -64,10 +64,14 @@ def plot_electrode_positions(fractions, nasion_inion_dist, preauricular_dist):
     """
     fig, ax = plt.subplots(figsize=(6, 6))
 
-    # Compute head circle radius based on nasion-inion and preauricular distances
-    head_radius = (nasion_inion_dist + preauricular_dist) / 4
-    circle = plt.Circle((0, 0), head_radius, color='blue', fill=False, linestyle='--', label='Head Boundary')
-    ax.add_artist(circle)
+    # Compute the radii for the oval
+    radius_y = nasion_inion_dist / 2  # Half the nasion-inion distance
+    radius_x = preauricular_dist / 2  # Half the preauricular distance
+
+    # Draw the oval (ellipse)
+    ellipse = plt.Ellipse((0, 0), width=preauricular_dist, height=nasion_inion_dist,
+                          color='blue', fill=False, linestyle='--', label='Head Boundary')
+    ax.add_artist(ellipse)
 
     # Plot electrodes
     for label, fraction in fractions.items():
@@ -75,9 +79,21 @@ def plot_electrode_positions(fractions, nasion_inion_dist, preauricular_dist):
         y = (fraction - 0.5) * nasion_inion_dist  # Position relative to nasion-inion
         ax.plot(x, y, 'ro')
         ax.text(x, y + 0.02, label, fontsize=10, ha='center')
+
+    # Calculate axis limits and ticks
+    max_distance = max(radius_x, radius_y)  # Use the largest radius for scaling
+    tick_step = 0.5
+
+    # Generate ticks
+    ticks = [tick * tick_step for tick in range(-2 * int(max_distance), 2 * int(max_distance) + 1)]
+    ticks = [tick for tick in ticks if -max_distance <= tick <= max_distance]
+
+    # Set ticks and axis limits
+    ax.set_xticks(ticks)
+    ax.set_yticks(ticks)
+    ax.set_xlim(-radius_x, radius_x)
+    ax.set_ylim(-radius_y, radius_y)
     
-    ax.set_xlim(-head_radius, head_radius)
-    ax.set_ylim(-head_radius, head_radius)
     ax.set_aspect('equal', 'box')
     ax.set_title("Electrode Positions")
     ax.set_xlabel("Preauricular Distance")
