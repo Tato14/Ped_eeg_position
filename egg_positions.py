@@ -70,8 +70,8 @@ def plot_electrode_positions(fractions, nasion_inion_dist, preauricular_dist):
     radius_x = preauricular_dist / 2  # Half the preauricular distance
 
     # Draw the oval (ellipse)
-    ellipse = plt.Ellipse((0, 0), width=preauricular_dist, height=nasion_inion_dist,
-                          color='blue', fill=False, linestyle='--', label='Head Boundary')
+    ellipse = Ellipse((0, 0), width=preauricular_dist, height=nasion_inion_dist,
+                      color='blue', fill=False, linestyle='--', label='Head Boundary')
     ax.add_patch(ellipse)  # Use add_patch instead of add_artist for patches like Ellipse
 
     # Plot electrodes
