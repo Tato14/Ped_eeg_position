@@ -72,7 +72,7 @@ def plot_electrode_positions(fractions, nasion_inion_dist, preauricular_dist):
     # Draw the oval (ellipse)
     ellipse = plt.Ellipse((0, 0), width=preauricular_dist, height=nasion_inion_dist,
                           color='blue', fill=False, linestyle='--', label='Head Boundary')
-    ax.add_artist(ellipse)
+    ax.add_patch(ellipse)  # Use add_patch instead of add_artist for patches like Ellipse
 
     # Plot electrodes
     for label, fraction in fractions.items():
