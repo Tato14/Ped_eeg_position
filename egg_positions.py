@@ -75,7 +75,14 @@ def plot_electrode_positions(fractions, nasion_inion_dist, preauricular_dist):
         y = (fraction - 0.5) * nasion_inion_dist  # Position relative to nasion-inion
         ax.plot(x, y, 'ro')
         ax.text(x, y + 0.02, label, fontsize=10, ha='center')
-
+    
+    # Set ticks to increment by 0.5
+    max_tick = max(nasion_inion_dist, preauricular_dist) / 2
+    ticks = [i for i in range(-int(max_tick) - 1, int(max_tick) + 1)]  # Ensure coverage beyond radius
+    ticks = [round(tick / 2, 1) for tick in ticks]  # Increment by 0.5
+    ax.set_xticks(ticks)
+    ax.set_yticks(ticks)
+    
     ax.set_xlim(-head_radius, head_radius)
     ax.set_ylim(-head_radius, head_radius)
     ax.set_aspect('equal', 'box')
