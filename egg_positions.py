@@ -82,7 +82,6 @@ def plot_electrode_positions(fractions, nasion_inion_dist, preauricular_dist):
     ax.set_title("Electrode Positions")
     ax.set_xlabel("Preauricular Distance")
     ax.set_ylabel("Nasion-Inion Distance")
-    ax.legend()
     ax.grid(True)
 
     st.pyplot(fig)
@@ -104,7 +103,6 @@ fractions, spacing_factor, front_shift_cm = get_midline_fractions(age_months, se
 # Display Results
 st.write("### Calculated Values")
 st.write(f"**Final Spacing Factor:** {spacing_factor}")
-st.write(f"**Electrode Fractions (with Cz shift):** {fractions}")
 st.write(f"**Frontal Shift (cm):** {front_shift_cm:.2f} cm")
 
 # Plot
