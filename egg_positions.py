@@ -40,11 +40,11 @@ def get_midline_fractions(age_months, sex, nasion_inion_dist):
 
     # Electrode offsets relative to Cz
     offsets = {
-        'Fpz': -0.40,
-        'Fz':  -0.30,
+        'Oz': -0.40,
+        'Pz':  -0.30,
         'Cz':   0.00,  # Cz is the reference point but will also shift
-        'Pz':   0.20,
-        'Oz':   0.40
+        'Fz':   0.20,
+        'Fpz':   0.40
     }
 
     # Calculate electrode positions with adjustments
